@@ -1,11 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SchoolWebApplication.Entities;
-using System.Collections.Generic;
-using System.Reflection.Emit;
+
 namespace SchoolWebApplication.Data
 {
-
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<User>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -15,11 +15,74 @@ namespace SchoolWebApplication.Data
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<Position> Positions { get; set; }
         public DbSet<Journal> Journals { get; set; }
-        public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
+            base.OnModelCreating(modelBuilder); 
+
+            modelBuilder.Entity<User>().ToTable("Users");
+            modelBuilder.Entity<IdentityRole>().ToTable("Roles");
+            modelBuilder.Entity<IdentityUserRole<string>>().ToTable("UserRoles");
+            modelBuilder.Entity<IdentityUserClaim<string>>().ToTable("UserClaims");
+            modelBuilder.Entity<IdentityUserLogin<string>>().ToTable("UserLogins");
+            modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("RoleClaims");
+            modelBuilder.Entity<IdentityUserToken<string>>().ToTable("UserTokens");
+
+            modelBuilder.Entity<Teacher>()
+                .HasOne(t => t.Position)
+                .WithMany(p => p.Teachers)
+                .HasForeignKey(t => t.PositionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Student>()
+                .HasOne(s => s.Class)
+                .WithMany(c => c.Students)
+                .HasForeignKey(s => s.ClassId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Subject>()
+                .HasOne(s => s.Teacher)
+                .WithMany(t => t.Subjects)
+                .HasForeignKey(s => s.TeacherId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Journal>()
+                .HasOne(j => j.Student)
+                .WithMany()
+                .HasForeignKey(j => j.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Journal>()
+                .HasOne(j => j.Class)
+                .WithMany()
+                .HasForeignKey(j => j.ClassId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Journal>()
+                .HasOne(j => j.Subject)
+                .WithMany()
+                .HasForeignKey(j => j.SubjectId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Journal>()
+                .HasOne(j => j.Teacher)
+                .WithMany()
+                .HasForeignKey(j => j.TeacherId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Teacher)
+                .WithMany()
+                .HasForeignKey(u => u.TeacherId)
+                .IsRequired(false);
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Student)
+                .WithMany()
+                .HasForeignKey(u => u.StudentId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
 
             modelBuilder.Entity<Position>().HasData(
                 new Position { Id = 1, Name = "Директор" },
@@ -78,52 +141,6 @@ namespace SchoolWebApplication.Data
                     Mark = 12
                 }
             );
-
-            modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, Name = "Kate" }
-            );
-
-            modelBuilder.Entity<Teacher>()
-                .HasOne(t => t.Position)
-                .WithMany(p => p.Teachers)
-                .HasForeignKey(t => t.PositionId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Student>()
-                .HasOne(s => s.Class)
-                .WithMany(c => c.Students)
-                .HasForeignKey(s => s.ClassId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Subject>()
-                .HasOne(s => s.Teacher)
-                .WithMany(t => t.Subjects)
-                .HasForeignKey(s => s.TeacherId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Journal>()
-                .HasOne(j => j.Student)
-                .WithMany()
-                .HasForeignKey(j => j.StudentId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Journal>()
-                .HasOne(j => j.Class)
-                .WithMany()
-                .HasForeignKey(j => j.ClassId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Journal>()
-                .HasOne(j => j.Subject)
-                .WithMany()
-                .HasForeignKey(j => j.SubjectId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Journal>()
-                .HasOne(j => j.Teacher)
-                .WithMany()
-                .HasForeignKey(j => j.TeacherId)
-                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

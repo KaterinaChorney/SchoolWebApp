@@ -11,7 +11,7 @@ namespace SchoolWebApplication.Data.Repositories
         {
             _context = context;
             Teachers = new TeacherRepository(context);
-            Students = new GenericRepository<Student>(context);
+            Students = new StudentRepository(context);
             Subjects = new GenericRepository<Subject>(context);
             Classes = new GenericRepository<Class>(context);
             Positions = new GenericRepository<Position>(context);
@@ -20,7 +20,7 @@ namespace SchoolWebApplication.Data.Repositories
         }
 
         public ITeacherRepository Teachers { get; private set; }
-        public IGenericRepository<Student> Students { get; private set; }
+        public IStudentRepository Students { get; private set; }
         public IGenericRepository<Subject> Subjects { get; private set; }
         public IGenericRepository<Class> Classes { get; private set; }
         public IGenericRepository<Position> Positions { get; private set; }

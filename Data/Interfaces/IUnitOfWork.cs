@@ -5,7 +5,7 @@ namespace SchoolWebApplication.Data.Interfaces
     public interface IUnitOfWork
     {
         ITeacherRepository Teachers { get; }
-        IGenericRepository<Student> Students { get; }
+        IStudentRepository Students { get; }
         IGenericRepository<Subject> Subjects { get; }
         IGenericRepository<Class> Classes { get; }
         IGenericRepository<Position> Positions { get; }
