@@ -7,7 +7,7 @@ namespace SchoolWebApplication.Data.Interfaces
         ITeacherRepository Teachers { get; }
         IStudentRepository Students { get; }
         ISubjectRepository Subjects { get; }
-        IGenericRepository<Class> Classes { get; }
+        IClassRepository Classes { get; }
         IGenericRepository<Position> Positions { get; }
         IGenericRepository<Journal> Journals { get; }
         IGenericRepository<User> Users { get; }
