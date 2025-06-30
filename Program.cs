@@ -65,6 +65,7 @@ namespace SchoolWebApplication
             // DI - Services & UoW
             builder.Services.AddScoped<ITeacherService, TeacherService>();
             builder.Services.AddScoped<IStudentService, StudentService>();
+            builder.Services.AddScoped<ISubjectService, SubjectService>();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             //JWT
