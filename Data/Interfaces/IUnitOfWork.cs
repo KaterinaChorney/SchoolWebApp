@@ -8,7 +8,8 @@ namespace SchoolWebApplication.Data.Interfaces
         IStudentRepository Students { get; }
         ISubjectRepository Subjects { get; }
         IClassRepository Classes { get; }
-        IGenericRepository<Position> Positions { get; }
+        IPositionRepository Positions { get; }
+
         IGenericRepository<Journal> Journals { get; }
         IGenericRepository<User> Users { get; }
 

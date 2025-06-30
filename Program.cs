@@ -67,6 +67,7 @@ namespace SchoolWebApplication
             builder.Services.AddScoped<IStudentService, StudentService>();
             builder.Services.AddScoped<ISubjectService, SubjectService>();
             builder.Services.AddScoped<IClassService, ClassService>();
+            builder.Services.AddScoped<IPositionService, PositionService>();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             //JWT
