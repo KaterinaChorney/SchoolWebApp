@@ -548,7 +548,7 @@ namespace SchoolWebApplication.Migrations
                         });
                 });
 
-            modelBuilder.Entity("SchoolWebApplication.Entities.User", b =>
+            modelBuilder.Entity("User", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -593,6 +593,12 @@ namespace SchoolWebApplication.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("RefreshTokenExpiryTime")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
@@ -636,7 +642,7 @@ namespace SchoolWebApplication.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("SchoolWebApplication.Entities.User", null)
+                    b.HasOne("User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -645,7 +651,7 @@ namespace SchoolWebApplication.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("SchoolWebApplication.Entities.User", null)
+                    b.HasOne("User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -660,7 +666,7 @@ namespace SchoolWebApplication.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SchoolWebApplication.Entities.User", null)
+                    b.HasOne("User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -669,7 +675,7 @@ namespace SchoolWebApplication.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("SchoolWebApplication.Entities.User", null)
+                    b.HasOne("User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -744,7 +750,7 @@ namespace SchoolWebApplication.Migrations
                     b.Navigation("Position");
                 });
 
-            modelBuilder.Entity("SchoolWebApplication.Entities.User", b =>
+            modelBuilder.Entity("User", b =>
                 {
                     b.HasOne("SchoolWebApplication.Entities.Student", "Student")
                         .WithMany()

@@ -10,7 +10,8 @@ namespace SchoolWebApplication.Data.Interfaces
         IClassRepository Classes { get; }
         IPositionRepository Positions { get; }
 
-        IGenericRepository<Journal> Journals { get; }
+        IJournalRepository Journals { get; }
+
         IGenericRepository<User> Users { get; }
 
         Task<int> SaveAsync();

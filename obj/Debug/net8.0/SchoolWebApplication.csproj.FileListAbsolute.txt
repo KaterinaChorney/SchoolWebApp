@@ -181,3 +181,5 @@ C:\Users\User\source\repos\SchoolWebApplication\SchoolWebApplication\obj\Debug\n
 C:\Users\User\source\repos\SchoolWebApplication\SchoolWebApplication\obj\Debug\net8.0\SchoolWebApplication.genruntimeconfig.cache
 C:\Users\User\source\repos\SchoolWebApplication\SchoolWebApplication\obj\Debug\net8.0\ref\SchoolWebApplication.dll
 C:\Users\User\source\repos\SchoolWebApplication\SchoolWebApplication\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+C:\Users\User\source\repos\SchoolWebApplication\SchoolWebApplication\bin\Debug\net8.0\AutoMapper.dll
+C:\Users\User\source\repos\SchoolWebApplication\SchoolWebApplication\bin\Debug\net8.0\AutoMapper.Extensions.Microsoft.DependencyInjection.dll

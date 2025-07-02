@@ -1,90 +1,53 @@
-﻿using SchoolWebApplication.DTOs;
-using SchoolWebApplication.Entities;
-using SchoolWebApplication.Services.Interfaces;
+﻿using AutoMapper;
 using SchoolWebApplication.Data.Interfaces;
+using SchoolWebApplication.DTOs;
+using SchoolWebApplication.Entities;
+using SchoolWebApplication.Exceptions;
+using SchoolWebApplication.Services.Interfaces;
 
 namespace SchoolWebApplication.Services.Implementations
 {
     public class SubjectService : ISubjectService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public SubjectService(IUnitOfWork unitOfWork)
+        public SubjectService(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
-        public async Task<IEnumerable<SubjectDto>> GetAllAsync()
+        public async Task<IEnumerable<SubjectDto>> GetAllAsync(string? search, string? sort, int page = 1, int pageSize = 10)
         {
-            var subjects = await _unitOfWork.Subjects.GetAllWithTeacherAsync();
-            return subjects.Select(s => new SubjectDto
-            {
-                Id = s.Id,
-                Name = s.Name,
-                TeacherFullName = s.Teacher != null ? $"{s.Teacher.LastName} {s.Teacher.FirstName}" : null
-            });
+            var subjects = await _unitOfWork.Subjects.GetAllAsync(search, sort, page, pageSize);
+            return _mapper.Map<IEnumerable<SubjectDto>>(subjects);
         }
 
-        public async Task<SubjectDto?> GetByIdAsync(int id)
+        public async Task<SubjectDto> GetByIdAsync(int id)
         {
-            var s = await _unitOfWork.Subjects.GetByIdAsync(id);
-            if (s == null) return null;
+            var subject = await _unitOfWork.Subjects.GetByIdWithTeacherAsync(id);
+            if (subject == null)
+                throw new NotFoundException($"Предмет з ID = {id} не знайдено");
 
-            return new SubjectDto
-            {
-                Id = s.Id,
-                Name = s.Name,
-                TeacherFullName = s.Teacher?.LastName + " " + s.Teacher?.FirstName
-            };
+            return _mapper.Map<SubjectDto>(subject);
         }
 
-        public async Task<IEnumerable<SubjectDto>> GetFilteredAsync(string? keyword, string? sortBy, int page = 1, int pageSize = 10)
+        public async Task<int> CreateAsync(CreateSubjectDto dto)
         {
-            var subjects = await _unitOfWork.Subjects.GetAllWithTeacherAsync();
-            var query = subjects.AsQueryable();
-
-            if (!string.IsNullOrEmpty(keyword))
-                query = query.Where(s => s.Name.ToLower().Contains(keyword.ToLower()));
-
-            query = sortBy switch
-            {
-                "name" => query.OrderBy(s => s.Name),
-                "teacher" => query.OrderBy(s => s.Teacher.LastName),
-                _ => query.OrderBy(s => s.Id)
-            };
-
-            return query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList()
-                .Select(s => new SubjectDto
-                {
-                    Id = s.Id,
-                    Name = s.Name,
-                    TeacherFullName = s.Teacher != null ? $"{s.Teacher.LastName} {s.Teacher.FirstName}" : null
-                });
-        }
-
-        public async Task CreateAsync(CreateSubjectDto dto)
-        {
-            var subject = new Subject
-            {
-                Name = dto.Name,
-                TeacherId = dto.TeacherId
-            };
-
+            var subject = _mapper.Map<Subject>(dto);
             await _unitOfWork.Subjects.AddAsync(subject);
             await _unitOfWork.SaveAsync();
+            return subject.Id;
         }
 
         public async Task UpdateAsync(int id, UpdateSubjectDto dto)
         {
             var subject = await _unitOfWork.Subjects.GetByIdAsync(id);
-            if (subject == null) return;
+            if (subject == null)
+                throw new NotFoundException($"Предмет з ID = {id} не знайдено");
 
-            subject.Name = dto.Name;
-            subject.TeacherId = dto.TeacherId;
-
+            _mapper.Map(dto, subject);
             _unitOfWork.Subjects.Update(subject);
             await _unitOfWork.SaveAsync();
         }
@@ -92,7 +55,8 @@ namespace SchoolWebApplication.Services.Implementations
         public async Task DeleteAsync(int id)
         {
             var subject = await _unitOfWork.Subjects.GetByIdAsync(id);
-            if (subject == null) return;
+            if (subject == null)
+                throw new NotFoundException($"Предмет з ID = {id} не знайдено");
 
             _unitOfWork.Subjects.Delete(subject);
             await _unitOfWork.SaveAsync();

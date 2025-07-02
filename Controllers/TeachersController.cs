@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SchoolWebApplication.DTOs;
 using SchoolWebApplication.Services.Interfaces;
 
@@ -6,6 +7,7 @@ namespace SchoolWebApplication.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] 
     public class TeachersController : ControllerBase
     {
         private readonly ITeacherService _teacherService;
@@ -17,6 +19,7 @@ namespace SchoolWebApplication.Controllers
 
         // GET: api/teachers
         [HttpGet]
+        [Authorize(Roles = "Admin,Teacher,Student")]
         public async Task<ActionResult<IEnumerable<TeacherDto>>> GetAll(
             [FromQuery] string? search,
             [FromQuery] string? sort,
@@ -24,56 +27,68 @@ namespace SchoolWebApplication.Controllers
             [FromQuery] int pageSize = 10)
         {
             var teachers = await _teacherService.GetAllAsync(search, sort, page, pageSize);
-            return Ok(teachers); // 200 OK
+            return Ok(teachers);
         }
 
-        // GET: api/teachers/{id}
-        [HttpGet("{id}")]
+        // GET: api/teachers/5
+        [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin,Teacher,Student")]
         public async Task<ActionResult<TeacherDto>> GetById(int id)
         {
+            if (id <= 0)
+                return BadRequest("Id має бути більшим за 0.");
+
             var teacher = await _teacherService.GetByIdAsync(id);
             if (teacher == null)
-                return NotFound(); // 404
+                return NotFound();
 
-            return Ok(teacher); // 200 OK
+            return Ok(teacher);
         }
 
         // POST: api/teachers
         [HttpPost]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Create([FromBody] CreateTeacherDto dto)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState); // 400
+                return BadRequest(ModelState);
 
-            await _teacherService.CreateAsync(dto);
-            return StatusCode(201); // 201 Created
+            var newId = await _teacherService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = newId }, dto);
         }
 
-        // PUT: api/teachers/{id}
-        [HttpPut("{id}")]
+        // PUT: api/teachers/5
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateTeacherDto dto)
         {
+            if (id <= 0)
+                return BadRequest("Id має бути більшим за 0.");
             if (!ModelState.IsValid)
-                return BadRequest(ModelState); // 400
+                return BadRequest(ModelState);
 
-            var teacher = await _teacherService.GetByIdAsync(id);
-            if (teacher == null)
-                return NotFound(); // 404
+            var existing = await _teacherService.GetByIdAsync(id);
+            if (existing == null)
+                return NotFound();
 
             await _teacherService.UpdateAsync(id, dto);
-            return NoContent(); // 204
+            return Ok($"Викладача з ID = {id} успішно оновлено.");
         }
 
-        // DELETE: api/teachers/{id}
-        [HttpDelete("{id}")]
+        // DELETE: api/teachers/5
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> Delete(int id)
         {
-            var teacher = await _teacherService.GetByIdAsync(id);
-            if (teacher == null)
-                return NotFound(); // 404
+            if (id <= 0)
+                return BadRequest("Id має бути більшим за 0.");
+
+            var existing = await _teacherService.GetByIdAsync(id);
+            if (existing == null)
+                return NotFound();
 
             await _teacherService.DeleteAsync(id);
-            return NoContent(); // 204
+            return Ok($"Викладача з ID = {id} успішно видалено.");
         }
     }
 }

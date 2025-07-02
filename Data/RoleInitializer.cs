@@ -57,10 +57,9 @@ namespace SchoolWebApplication.Data
                 var student = new User
                 {
                     Email = studentEmail,
-                    UserName = "student2",
+                    UserName = "student",
                     DisplayName = "Учень",
                     EmailConfirmed = true,
-                    StudentId = 2
                 };
                 await userManager.CreateAsync(student, "Stu123!");
                 await userManager.AddToRoleAsync(student, "Student");

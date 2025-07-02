@@ -1,15 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using SchoolWebApplication.Entities;
 
-namespace SchoolWebApplication.Entities
+public class User : IdentityUser
 {
-    public class User : IdentityUser
-    {
-        public int? TeacherId { get; set; }
-        public Teacher? Teacher { get; set; }
-        public int? StudentId { get; set; }
-        public Student? Student { get; set; }
-
-
-        public string? DisplayName { get; set; }
-    }
+    public string? DisplayName { get; set; }
+    public string? RefreshToken { get; set; }
+    public DateTime RefreshTokenExpiryTime { get; set; }
 }

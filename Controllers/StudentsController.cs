@@ -7,7 +7,7 @@ namespace SchoolWebApplication.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Student")] 
+    [Authorize]
     public class StudentsController : ControllerBase
     {
         private readonly IStudentService _studentService;
@@ -17,61 +17,79 @@ namespace SchoolWebApplication.Controllers
             _studentService = studentService;
         }
 
-        [HttpGet("filter")]
-        public async Task<ActionResult<IEnumerable<StudentDto>>> GetFiltered(
-            [FromQuery] string? keyword,
-            [FromQuery] string? sortBy,
+        // GET: api/students
+        [HttpGet]
+        [Authorize(Roles = "Admin,Teacher,Student")]
+        public async Task<ActionResult<IEnumerable<StudentDto>>> GetAll(
+            [FromQuery] string? search,
+            [FromQuery] string? sort,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
-            var students = await _studentService.GetFilteredAsync(keyword, sortBy, page, pageSize);
+            var students = await _studentService.GetAllAsync(search, sort, page, pageSize);
             return Ok(students);
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<StudentDto>>> GetAll()
-        {
-            var students = await _studentService.GetAllAsync();
-            return Ok(students);
-        }
-
-        [HttpGet("{id}")]
+        // GET: api/students/5
+        [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin,Teacher,Student")]
         public async Task<ActionResult<StudentDto>> GetById(int id)
         {
+            if (id <= 0)
+                return BadRequest("Id має бути більшим за 0.");
+
             var student = await _studentService.GetByIdAsync(id);
-            if (student == null) return NotFound();
+            if (student == null)
+                return NotFound();
+
             return Ok(student);
         }
 
+        // POST: api/students
         [HttpPost]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Create([FromBody] CreateStudentDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            await _studentService.CreateAsync(dto);
-            return StatusCode(201);
+            var newId = await _studentService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = newId }, dto);
         }
 
-        [HttpPut("{id}")]
+        // PUT: api/students/5
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateStudentDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (id <= 0)
+                return BadRequest("Id має бути більшим за 0.");
 
-            var student = await _studentService.GetByIdAsync(id);
-            if (student == null) return NotFound();
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var existing = await _studentService.GetByIdAsync(id);
+            if (existing == null)
+                return NotFound();
 
             await _studentService.UpdateAsync(id, dto);
-            return NoContent();
+            return Ok($"Студента з ID = {id} успішно оновлено.");
         }
 
-        [HttpDelete("{id}")]
+        // DELETE: api/students/5
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Delete(int id)
         {
-            var student = await _studentService.GetByIdAsync(id);
-            if (student == null) return NotFound();
+            if (id <= 0)
+                return BadRequest("Id має бути більшим за 0.");
+
+            var existing = await _studentService.GetByIdAsync(id);
+            if (existing == null)
+                return NotFound();
 
             await _studentService.DeleteAsync(id);
-            return NoContent();
+            return Ok($"Студента з ID = {id} успішно видалено.");
         }
     }
 }

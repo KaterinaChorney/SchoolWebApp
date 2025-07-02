@@ -70,20 +70,6 @@ namespace SchoolWebApplication.Data
                 .HasForeignKey(j => j.TeacherId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.Teacher)
-                .WithMany()
-                .HasForeignKey(u => u.TeacherId)
-                .IsRequired(false);
-
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.Student)
-                .WithMany()
-                .HasForeignKey(u => u.StudentId)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.Restrict);
-
-
             modelBuilder.Entity<Position>().HasData(
                 new Position { Id = 1, Name = "Директор" },
                 new Position { Id = 2, Name = "Заступник з НВР" },

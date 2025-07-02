@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SchoolWebApplication.DTOs;
 using SchoolWebApplication.Entities;
 using SchoolWebApplication.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SchoolWebApplication.Controllers
 {
@@ -11,17 +12,14 @@ namespace SchoolWebApplication.Controllers
     public class AuthController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
-        private readonly SignInManager<User> _signInManager;
         private readonly JwtService _jwtService;
 
-        public AuthController(UserManager<User> userManager, SignInManager<User> signInManager, JwtService jwtService)
+        public AuthController(UserManager<User> userManager, JwtService jwtService)
         {
             _userManager = userManager;
-            _signInManager = signInManager;
             _jwtService = jwtService;
         }
 
-        // POST: api/auth/register
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto dto)
         {
@@ -29,36 +27,79 @@ namespace SchoolWebApplication.Controllers
             {
                 Email = dto.Email,
                 UserName = dto.UserName,
-                TeacherId = dto.TeacherId
+                DisplayName = dto.UserName
             };
 
             var result = await _userManager.CreateAsync(user, dto.Password);
-
             if (!result.Succeeded)
                 return BadRequest(result.Errors);
 
             await _userManager.AddToRoleAsync(user, dto.Role);
-
-            return Ok(new { message = "Користувача створено" });
+            return Ok("Реєстрація успішна. Користувач доданий до ролі: " + dto.Role);
         }
 
-        // POST: api/auth/login
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
-            var user = await _userManager.FindByEmailAsync(dto.Email);
-            if (user == null)
-                return Unauthorized("Невірний email або пароль");
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
 
-            var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, false);
+                var user = await _userManager.FindByEmailAsync(dto.Email);
+                if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
+                    return Unauthorized("Невірна пошта або пароль");
 
-            if (!result.Succeeded)
-                return Unauthorized("Невірний email або пароль");
+                var roles = await _userManager.GetRolesAsync(user);
+                var accessToken = _jwtService.GenerateToken(user, roles);
+                var refreshToken = _jwtService.GenerateRefreshToken();
+
+                user.RefreshToken = refreshToken;
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+                await _userManager.UpdateAsync(user);
+
+                return Ok(new TokenResponseDto
+                {
+                    AccessToken = accessToken,
+                    RefreshToken = refreshToken
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Помилка: " + ex.Message });
+            }
+        }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshDto dto)
+        {
+            var principal = _jwtService.GetPrincipalFromExpiredToken(dto.AccessToken);
+            if (principal == null) return BadRequest("Недійсний токен");
+
+            var username = principal.Identity?.Name;
+            if (username == null) return BadRequest("Помилка у токені");
+
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null ||
+                user.RefreshToken != dto.RefreshToken ||
+                user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            {
+                return Unauthorized("Недійсний або прострочений Refresh токен");
+            }
 
             var roles = await _userManager.GetRolesAsync(user);
-            var token = _jwtService.GenerateToken(user, roles);
+            var newAccessToken = _jwtService.GenerateToken(user, roles);
+            var newRefreshToken = _jwtService.GenerateRefreshToken();
 
-            return Ok(new { token });
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await _userManager.UpdateAsync(user);
+
+            return Ok(new TokenResponseDto
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken
+            });
         }
     }
 }

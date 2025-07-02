@@ -7,7 +7,7 @@ namespace SchoolWebApplication.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin,Teacher")]
+    [Authorize]
     public class ClassesController : ControllerBase
     {
         private readonly IClassService _classService;
@@ -17,52 +17,79 @@ namespace SchoolWebApplication.Controllers
             _classService = classService;
         }
 
-        [HttpGet("filter")]
-        public async Task<ActionResult<IEnumerable<ClassDto>>> GetFiltered(
-            [FromQuery] string? keyword,
-            [FromQuery] string? sortBy,
+        // GET: api/classes
+        [HttpGet]
+        [Authorize(Roles = "Admin,Teacher,Student")]
+        public async Task<ActionResult<IEnumerable<ClassDto>>> GetAll(
+            [FromQuery] string? search,
+            [FromQuery] string? sort,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
-            var result = await _classService.GetFilteredAsync(keyword, sortBy, page, pageSize);
-            return Ok(result);
+            var classes = await _classService.GetAllAsync(search, sort, page, pageSize);
+            return Ok(classes);
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<ClassDto>>> GetAll()
-        {
-            var result = await _classService.GetAllAsync();
-            return Ok(result);
-        }
-
-        [HttpGet("{id}")]
+        // GET: api/classes/5
+        [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin,Teacher,Student")]
         public async Task<ActionResult<ClassDto>> GetById(int id)
         {
-            var c = await _classService.GetByIdAsync(id);
-            return c == null ? NotFound() : Ok(c);
+            if (id <= 0)
+                return BadRequest("Id має бути більшим за 0.");
+
+            var classItem = await _classService.GetByIdAsync(id);
+            if (classItem == null)
+                return NotFound();
+
+            return Ok(classItem);
         }
 
+        // POST: api/classes
         [HttpPost]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Create([FromBody] CreateClassDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            await _classService.CreateAsync(dto);
-            return StatusCode(201);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var newId = await _classService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = newId }, dto);
         }
 
-        [HttpPut("{id}")]
+        // PUT: api/classes/5
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateClassDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (id <= 0)
+                return BadRequest("Id має бути більшим за 0.");
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var existing = await _classService.GetByIdAsync(id);
+            if (existing == null)
+                return NotFound();
+
             await _classService.UpdateAsync(id, dto);
-            return NoContent();
+            return Ok($"Клас з ID = {id} успішно оновлено.");
         }
 
-        [HttpDelete("{id}")]
+        // DELETE: api/classes/5
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Delete(int id)
         {
+            if (id <= 0)
+                return BadRequest("Id має бути більшим за 0.");
+
+            var existing = await _classService.GetByIdAsync(id);
+            if (existing == null)
+                return NotFound();
+
             await _classService.DeleteAsync(id);
-            return NoContent();
+            return Ok($"Клас з ID = {id} успішно видалено.");
         }
     }
 }

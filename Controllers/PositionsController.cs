@@ -7,7 +7,7 @@ namespace SchoolWebApplication.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     public class PositionsController : ControllerBase
     {
         private readonly IPositionService _positionService;
@@ -17,48 +17,79 @@ namespace SchoolWebApplication.Controllers
             _positionService = positionService;
         }
 
-        [HttpGet("filter")]
-        public async Task<ActionResult<IEnumerable<PositionDto>>> GetFiltered(string? keyword, string? sortBy, int page = 1, int pageSize = 10)
-        {
-            var result = await _positionService.GetFilteredAsync(keyword, sortBy, page, pageSize);
-            return Ok(result);
-        }
-
+        // GET: api/positions
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PositionDto>>> GetAll()
+        [Authorize(Roles = "Admin,Teacher,Student")]
+        public async Task<ActionResult<IEnumerable<PositionDto>>> GetAll(
+            [FromQuery] string? search,
+            [FromQuery] string? sort,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
-            var result = await _positionService.GetAllAsync();
-            return Ok(result);
+            var positions = await _positionService.GetAllAsync(search, sort, page, pageSize);
+            return Ok(positions);
         }
 
-        [HttpGet("{id}")]
+        // GET: api/positions/5
+        [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin,Teacher,Student")]
         public async Task<ActionResult<PositionDto>> GetById(int id)
         {
+            if (id <= 0)
+                return BadRequest("Id має бути більшим за 0.");
+
             var position = await _positionService.GetByIdAsync(id);
-            return position == null ? NotFound() : Ok(position);
+            if (position == null)
+                return NotFound();
+
+            return Ok(position);
         }
 
+        // POST: api/positions
         [HttpPost]
-        public async Task<IActionResult> Create(CreatePositionDto dto)
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> Create([FromBody] CreatePositionDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            await _positionService.CreateAsync(dto);
-            return StatusCode(201);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var newId = await _positionService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = newId }, dto);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, UpdatePositionDto dto)
+        // PUT: api/positions/5
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdatePositionDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (id <= 0)
+                return BadRequest("Id має бути більшим за 0.");
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var existing = await _positionService.GetByIdAsync(id);
+            if (existing == null)
+                return NotFound();
+
             await _positionService.UpdateAsync(id, dto);
-            return NoContent();
+            return Ok($"Посаду з ID = {id} успішно оновлено.");
         }
 
-        [HttpDelete("{id}")]
+        // DELETE: api/positions/5
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> Delete(int id)
         {
+            if (id <= 0)
+                return BadRequest("Id має бути більшим за 0.");
+
+            var existing = await _positionService.GetByIdAsync(id);
+            if (existing == null)
+                return NotFound();
+
             await _positionService.DeleteAsync(id);
-            return NoContent();
+            return Ok($"Посаду з ID = {id} успішно видалено.");
         }
     }
 }
