@@ -23,12 +23,23 @@ namespace SchoolWebApplication.Data.Repositories
                     c.ClassTeacher.ToLower().Contains(lowerSearch));
             }
 
+            bool descending = false;
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                sort = sort.Trim();
+                if (sort.StartsWith("-"))
+                {
+                    descending = true;
+                    sort = sort.Substring(1);
+                }
+            }
+
             query = sort?.ToLower() switch
             {
-                "name" => query.OrderBy(c => c.Name),
-                "teacher" => query.OrderBy(c => c.ClassTeacher),
-                _ => query.OrderBy(c => c.Id)
+                "name" => descending ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name),
+                _ => query.OrderBy(p => p.Id)
             };
+
 
             query = query.Skip((page - 1) * pageSize).Take(pageSize);
 

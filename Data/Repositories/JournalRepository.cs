@@ -27,9 +27,20 @@ namespace SchoolWebApplication.Data.Repositories
                     j.Subject.Name.ToLower().Contains(lowerSearch));
             }
 
+            bool descending = false;
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                sort = sort.Trim();
+                if (sort.StartsWith("-"))
+                {
+                    descending = true;
+                    sort = sort.Substring(1);
+                }
+            }
+
             query = sort?.ToLower() switch
             {
-                "date" => query.OrderBy(j => j.Date),
+                "date" => descending ? query.OrderByDescending(j => j.Date) : query.OrderBy(j => j.Date),
                 _ => query.OrderBy(j => j.Id)
             };
 

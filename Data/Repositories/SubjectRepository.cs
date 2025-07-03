@@ -22,9 +22,20 @@ namespace SchoolWebApplication.Data.Repositories
                     s.Name.ToLower().Contains(lowerSearch));
             }
 
+            bool descending = false;
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                sort = sort.Trim();
+                if (sort.StartsWith("-"))
+                {
+                    descending = true;
+                    sort = sort.Substring(1);
+                }
+            }
+
             query = sort?.ToLower() switch
             {
-                "name" => query.OrderBy(s => s.Name),
+                "name" => descending ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name),
                 _ => query.OrderBy(s => s.Id)
             };
 

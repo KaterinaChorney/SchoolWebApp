@@ -21,9 +21,20 @@ namespace SchoolWebApplication.Data.Repositories
                 query = query.Where(p => p.Name.ToLower().Contains(lowerSearch));
             }
 
+            bool descending = false;
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                sort = sort.Trim();
+                if (sort.StartsWith("-"))
+                {
+                    descending = true;
+                    sort = sort.Substring(1);
+                }
+            }
+
             query = sort?.ToLower() switch
             {
-                "name" => query.OrderBy(p => p.Name),
+                "name" => descending ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name),
                 _ => query.OrderBy(p => p.Id)
             };
 
